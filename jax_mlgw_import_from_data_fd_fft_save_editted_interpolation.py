@@ -924,6 +924,44 @@ def to_frequencyseries_slice_padding(theta, sample_rate, delta_f):
 
     return freq,hp_f, hc_f
 
+def compute_time_grid(theta, sample_rate):
+    m1 = theta[:, 0]
+    m2 = theta[:, 1]
+    m_tot = m1 + m2
+
+    t_min_phys = m_tot * t_min_red
+    t_max_phys = m_tot * t_max_red
+    t_interval = t_max_phys - t_min_phys
+
+    t_interval_max_ind = jnp.argmax(t_interval)
+
+    t_min_f = t_min_phys[t_interval_max_ind]
+    t_max_f = t_max_phys[t_interval_max_ind]
+
+    delta_t = 1.0 / sample_rate
+    number_points = int(((t_max_f - t_min_f) * sample_rate).item())  # safe here
+
+    t_grid_final = t_min_f + jnp.arange(number_points) * delta_t
+    return t_grid_final, delta_t
+
+def to_frequencyseries_slice_padding_jax_01_3(theta, t_grid_final, delta_t):
+    Hp, Hc = GET_WF_TD(t_grid_final, theta)
+
+    number_points = t_grid_final.shape[0]
+    flen = number_points // 2 + 1
+
+    freq_grid = jnp.fft.rfftfreq(number_points, delta_t)
+
+    hp_f = jnp.fft.rfft(Hp, axis=-1) * delta_t
+    hc_f = jnp.fft.rfft(Hc, axis=-1) * delta_t
+
+    hp_f_final = hp_f[:, :flen]
+    hc_f_final = hc_f[:, :flen]
+    freq_grid_final = freq_grid[:flen]
+
+    return Hp, Hc, hp_f_final, hc_f_final, freq_grid_final
+
+
 def to_frequencyseries_slice_padding_jax_01(theta, sample_rate, delta_f):
     """
     JAX-compatible version of to_frequencyseries_slice_padding_5.
