@@ -847,6 +847,75 @@ def GET_WF_TD(t_grid,theta):
 
 """## DEFINING THE FOURIER TRANSFORM"""
 
+
+def compute_time_grid(theta, sample_rate):
+    m1 = theta[:, 0]
+    m2 = theta[:, 1]
+    m_tot = m1 + m2
+
+    t_min_phys = m_tot * t_min_red
+    t_max_phys = m_tot * t_max_red
+    t_interval = t_max_phys - t_min_phys
+
+    t_interval_max_ind = jnp.argmax(t_interval)
+
+    t_min_f = t_min_phys[t_interval_max_ind]
+    t_max_f = t_max_phys[t_interval_max_ind]
+
+    delta_t = 1.0 / sample_rate
+    number_points = jnp.array((((t_max_f - t_min_f) * sample_rate)),int)  # safe here
+
+    t_grid_final = t_min_f + jnp.arange(number_points) * delta_t
+    return t_grid_final
+
+def to_frequencyseries_slice_padding_jax_01_3(theta, sample_rate, t_grid):
+    Hp, Hc = GET_WF_TD(t_grid, theta)
+    number_points = t_grid.shape[0]
+    flen = number_points // 2 + 1
+    delta_t=1.0 / sample_rate
+
+
+    freq_grid = jnp.fft.rfftfreq(number_points, delta_t)
+
+    hp_f = jnp.fft.rfft(Hp, axis=-1) * delta_t
+    hc_f = jnp.fft.rfft(Hc, axis=-1) * delta_t
+
+    hp_f_final = hp_f[:, :flen]
+    hc_f_final = hc_f[:, :flen]
+    freq_grid_final = freq_grid[:flen]
+
+    return Hp, Hc, hp_f_final, hc_f_final, freq_grid_final
+
+def interpolation(f_new,f_old,hp):
+  return jnp.interp(f_new,f_old,hp)
+
+def interp_waveform_fd_mlgw_jax(f_grid_final,f_grid_old,h):
+  # Change in_axes to (None, None, 0) to map only over the waveform batch
+  H=jax.vmap(interpolation,in_axes=(None,None,0))(f_grid_final,f_grid_old,h)
+  return H
+
+def GET_WF_FD_f(theta,f_grid,sample_rate,t_grid):
+  df=f_grid[1]-f_grid[0]	
+  Hp, Hc, hp_f_final, hc_f_final, freq_grid_final=to_frequencyseries_slice_padding_jax_01_3(theta, sample_rate, t_grid)
+  HP=interp_waveform_fd_mlgw_jax(f_grid,freq_grid_final,hp_f_final)
+  HC=interp_waveform_fd_mlgw_jax(f_grid,freq_grid_final,hc_f_final)
+  return HP,HC
+
+
+
+
+
+
+
+
+
+
+
+"""# TD and FD WRAPPER FUNCTION
+
+## TO BE REMOVED SOON
+"""
+
 def to_frequencyseries_slice_padding(theta, sample_rate, delta_f):
     """
     Returns the rFFT of time-domain waveforms, padded to common length,
@@ -924,59 +993,9 @@ def to_frequencyseries_slice_padding(theta, sample_rate, delta_f):
 
     return freq,hp_f, hc_f
 
-def compute_time_grid(theta, sample_rate):
-    m1 = theta[:, 0]
-    m2 = theta[:, 1]
-    m_tot = m1 + m2
-
-    t_min_phys = m_tot * t_min_red
-    t_max_phys = m_tot * t_max_red
-    t_interval = t_max_phys - t_min_phys
-
-    t_interval_max_ind = jnp.argmax(t_interval)
-
-    t_min_f = t_min_phys[t_interval_max_ind]
-    t_max_f = t_max_phys[t_interval_max_ind]
-
-    delta_t = 1.0 / sample_rate
-    number_points = jnp.array((((t_max_f - t_min_f) * sample_rate)),int)  # safe here
-
-    t_grid_final = t_min_f + jnp.arange(number_points) * delta_t
-    return t_grid_final
-
-def to_frequencyseries_slice_padding_jax_01_3(theta, sample_rate, t_grid):
-    Hp, Hc = GET_WF_TD(t_grid, theta)
-    number_points = t_grid.shape[0]
-    flen = number_points // 2 + 1
-    delta_t=1.0 / sample_rate
 
 
-    freq_grid = jnp.fft.rfftfreq(number_points, delta_t)
 
-    hp_f = jnp.fft.rfft(Hp, axis=-1) * delta_t
-    hc_f = jnp.fft.rfft(Hc, axis=-1) * delta_t
-
-    hp_f_final = hp_f[:, :flen]
-    hc_f_final = hc_f[:, :flen]
-    freq_grid_final = freq_grid[:flen]
-
-    return Hp, Hc, hp_f_final, hc_f_final, freq_grid_final
-
-def interpolation(f_new,f_old,hp):
-  return jnp.interp(f_new,f_old,hp)
-
-def interp_waveform_fd_mlgw_jax(f_grid_final,f_grid_old,h):
-  # Change in_axes to (None, None, 0) to map only over the waveform batch
-  H=jax.vmap(interpolation,in_axes=(None,None,0))(f_grid_final,f_grid_old,h)
-  return H
-
-def GET_WF_FD_f(theta,f_grid,sample_rate,t_grid):
-  df=f_grid[1]-f_grid[0]
-  delta_t=1.0/sample_rate	
-  Hp, Hc, hp_f_final, hc_f_final, freq_grid_final=to_frequencyseries_slice_padding_jax_01_3(theta, sample_rate, t_grid)
-  HP=interp_waveform_fd_mlgw_jax(f_grid,freq_grid_final,hp_f_final)
-  HC=interp_waveform_fd_mlgw_jax(f_grid,freq_grid_final,hc_f_final)
-  return HP,HC
 
 
 def to_frequencyseries_slice_padding_jax_01(theta, sample_rate, delta_f):
@@ -1043,15 +1062,6 @@ def to_frequencyseries_slice_padding_jax_01(theta, sample_rate, delta_f):
     return Hp, Hc, t_grid_final, hp_f_final, hc_f_final, freq_grid_final
 
 
-
-
-def interpolation(f_new,f_old,hp):
-  return jnp.interp(f_new,f_old,hp)
-
-def interp_waveform_fd_mlgw_jax(f_grid_final,f_grid_old,h):
-  # Change in_axes to (None, None, 0) to map only over the waveform batch
-  H=jax.vmap(interpolation,in_axes=(None,None,0))(f_grid_final,f_grid_old,h)
-  return H
 
 
 def GET_WF_FD(theta,f_grid,sample_rate):
