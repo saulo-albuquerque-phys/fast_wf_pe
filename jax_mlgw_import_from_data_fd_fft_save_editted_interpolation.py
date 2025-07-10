@@ -939,7 +939,7 @@ def compute_time_grid(theta, sample_rate):
     t_max_f = t_max_phys[t_interval_max_ind]
 
     delta_t = 1.0 / sample_rate
-    number_points = int(((t_max_f - t_min_f) * sample_rate).item())  # safe here
+    number_points = jnp.array((((t_max_f - t_min_f) * sample_rate)),int)  # safe here
 
     t_grid_final = t_min_f + jnp.arange(number_points) * delta_t
     return t_grid_final, delta_t
