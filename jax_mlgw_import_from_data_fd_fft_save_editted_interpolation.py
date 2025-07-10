@@ -966,7 +966,7 @@ def to_frequencyseries_slice_padding_jax_01(theta, sample_rate, delta_f):
     t_max_f=t_max_phys[t_interval_max_ind]
 
 
-    number_points = int(((t_max_f - t_min_f) * sample_rate).item())
+    number_points = jnp.array((((t_max_f - t_min_f) * sample_rate)),int)
     t_grid_final = t_min_f + jnp.arange(number_points) * delta_t
 
     Hp,Hc=GET_WF_TD(t_grid_final,theta)
