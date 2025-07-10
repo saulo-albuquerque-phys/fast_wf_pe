@@ -946,7 +946,7 @@ def compute_time_grid(theta, sample_rate):
 
 def to_frequencyseries_slice_padding_jax_01_3(theta, sample_rate, t_grid):
     Hp, Hc = GET_WF_TD(t_grid, theta)
-    number_points = t_grid_final.shape[0]
+    number_points = t_grid.shape[0]
     flen = number_points // 2 + 1
     delta_t=1.0 / sample_rate
 
