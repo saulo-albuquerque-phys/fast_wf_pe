@@ -959,7 +959,7 @@ def to_frequencyseries_slice_padding_jax_01(theta, sample_rate, delta_f):
 
     t_interval=t_max_phys-t_min_phys
     t_interval_max=jnp.max(t_interval)
-    t_interval_max_ind=np.argmax(t_interval)
+    t_interval_max_ind=jnp.argmax(t_interval)
     
 
     t_min_f=t_min_phys[t_interval_max_ind]
