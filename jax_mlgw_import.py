@@ -917,3 +917,20 @@ def GET_WF_FD_interp_tm(frequency_grid,theta,sample_rate,m_tot):
   hp_fft_interp=jax.vmap(interpolation,in_axes=(None,None,0))(frequency_grid,f_grid,hp_fft)
   hc_fft_interp=jax.vmap(interpolation,in_axes=(None,None,0))(frequency_grid,f_grid,hc_fft)
   return hp_fft_interp, hc_fft_interp
+
+m_tot=80
+sample_rate=4096
+t_min=t_min_red*m_tot
+t_max=t_max_red*m_tot	
+
+delta_t_0=1/sample_rate
+time_grid=jnp.arange(t_min,t_max,delta_t_0)
+
+def GET_WF_FD_interp_test(frequency_grid,theta):
+  hp,hc=get_wf_cyclic_time_shifted_to_right(time_grid,theta)
+  hp_fft=jnp.fft.rfft(hp)*(time_grid[1]-time_grid[0])
+  hc_fft=jnp.fft.rfft(hc)*(time_grid[1]-time_grid[0])
+  f_grid=jnp.fft.rfftfreq(len(time_grid),time_grid[1]-time_grid[0])
+  hp_fft_interp=jax.vmap(interpolation,in_axes=(None,None,0))(frequency_grid,f_grid,hp_fft)
+  hc_fft_interp=jax.vmap(interpolation,in_axes=(None,None,0))(frequency_grid,f_grid,hc_fft)
+  return hp_fft_interp, hc_fft_interp
