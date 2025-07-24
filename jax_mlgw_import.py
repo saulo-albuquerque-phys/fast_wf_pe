@@ -934,6 +934,6 @@ def GET_WF_FD_interp_test(frequency_grid,m1,m2,s1z,s2z,d=1,inclination=0,phi_0=0
   f_grid=jnp.fft.rfftfreq(len(time_grid),time_grid[1]-time_grid[0])
   hp_fft_interp=jax.vmap(interpolation,in_axes=(None,None,0))(frequency_grid,f_grid,hp_fft)
   hc_fft_interp=jax.vmap(interpolation,in_axes=(None,None,0))(frequency_grid,f_grid,hc_fft)
-  hp_f=hp_fft_interp[0][0]
-  hc_f=hc_fft_interp[0][0]
+  hp_f=hp_fft_interp[0,0]
+  hc_f=hc_fft_interp[0,0]
   return hp_fft_interp, hc_fft_interp
