@@ -889,7 +889,7 @@ def get_wf_cyclic_time_shifted_to_right(time_grid,theta):
 def interpolation(f_new,f_old,hp):
   return jnp.interp(f_new,f_old,hp)
 
-def GET_WF_FD(time_grid,frequency_grid,theta):
+def GET_WF_FD(time_grid,theta):
   hp,hc=get_wf_cyclic_time_shifted_to_right(time_grid,theta)
   hp_fft=jnp.fft.rfft(hp)*(time_grid[1]-time_grid[0])
   hc_fft=jnp.fft.rfft(hc)*(time_grid[1]-time_grid[0])
