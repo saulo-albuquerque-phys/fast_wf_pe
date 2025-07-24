@@ -926,7 +926,8 @@ t_max=t_max_red*m_tot
 delta_t_0=1/sample_rate
 time_grid=jnp.arange(t_min,t_max,delta_t_0)
 
-def GET_WF_FD_interp_test(frequency_grid,theta):
+def GET_WF_FD_interp_test(frequency_grid,m1,m2,s1z,s2z,d=1,angle1=0,angle2=0):
+  theta=jnp.array(m1,m2,s1z,s2z,d,angle1,angle2)
   hp,hc=get_wf_cyclic_time_shifted_to_right(time_grid,theta)
   hp_fft=jnp.fft.rfft(hp)*(time_grid[1]-time_grid[0])
   hc_fft=jnp.fft.rfft(hc)*(time_grid[1]-time_grid[0])
